@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weighing System</title>
+</head>
+<body>
+    <h2>Enter Pallet Data</h2>
+    <form method="post">
+        <label>DIV:</label><br>
+        <input type="text" name="div" required><br>
+
+        <label>Item Code:</label><br>
+        <input type="text" name="item_code" required><br>
+
+        <label>Total Weight (kg):</label><br>
+        <input type="number" step="0.01" name="total_weight" required><br>
+
+        <label>Pallet Weight (kg):</label><br>
+        <input type="number" step="0.01" name="pallet_weight" required><br><br>
+
+        <input type="submit" value="Calculate">
+    </form>
+
+    {% if result %}
+        <h3>Total Quantity in Pallet: {{ result }}</h3>
+    {% endif %}
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html>
