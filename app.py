@@ -1,16 +1,22 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import psycopg2
 from datetime import datetime
 import os
+from flask_cors import CORS  # ✅ Required for React frontend
 
 app = Flask(__name__)
+CORS(app)  # ✅ Allow all frontend origins for now (you can restrict later)
 
-# Replace with your actual Render Postgres URL (external one)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://doweighs_user:LLGoSdNM6uFsOrQnO7phgzxULm1jhLxm@dpg-d1vomdumcj7s73fjji50-a.singapore-postgres.render.com/doweighs")
+# Replace with your actual Render Postgres URL (external)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://doweighs_user:LLGoSdNM6uFsOrQnO7phgzxULm1jhLxm@dpg-d1vomdumcj7s73fjji50-a.singapore-postgres.render.com/doweighs"
+)
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
+# ✅ Route for form-based (template) access (optional now)
 @app.route('/', methods=['GET', 'POST'])
 def index():
     result = None
@@ -26,7 +32,6 @@ def index():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            # Fetch unit weight
             cur.execute(
                 "SELECT description, unit_weight FROM inventory WHERE inventory_org = %s AND item_code = %s",
                 (div, item_code)
@@ -37,7 +42,6 @@ def index():
                 description, unit_weight = row
                 quantity = (total_weight - pallet_weight) / unit_weight
 
-                # Insert into logs table
                 cur.execute(
                     """
                     INSERT INTO logs (div, item_code, description, unit_weight, total_weight, pallet_weight, quantity, entry_date)
@@ -57,8 +61,54 @@ def index():
 
     return render_template('index.html', result=result, error=error)
 
-# ✅ This is what starts the Flask server
+# ✅ NEW ROUTE for React Frontend Integration
+@app.route('/submit', methods=['POST'])
+def submit_data():
+    try:
+        data = request.get_json()
+        div = data.get('div')
+        item_code = data.get('item_code')
+        total_weight = float(data.get('total_weight'))
+        pallet_weight = float(data.get('pallet_weight'))
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT description, unit_weight FROM inventory WHERE inventory_org = %s AND item_code = %s",
+            (div, item_code)
+        )
+        row = cur.fetchone()
+
+        if row:
+            description, unit_weight = row
+            net_weight = total_weight - pallet_weight
+            quantity = net_weight / unit_weight
+
+            # Log to database
+            cur.execute(
+                """
+                INSERT INTO logs (div, item_code, description, unit_weight, total_weight, pallet_weight, quantity, entry_date)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (div, item_code, description, unit_weight, total_weight, pallet_weight, quantity, datetime.now())
+            )
+            conn.commit()
+
+            cur.close()
+            conn.close()
+
+            return jsonify({
+                "net_weight": round(net_weight, 2),
+                "quantity": int(quantity)
+            }), 200
+        else:
+            return jsonify({"error": "Item not found in inventory"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ✅ Required to run on Render
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 5000))  # Render provides PORT
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
