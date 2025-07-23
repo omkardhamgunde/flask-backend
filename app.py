@@ -60,7 +60,37 @@ def index():
             error = str(e)
 
     return render_template('index.html', result=result, error=error)
+@app.route('/download', methods=['GET'])
+def download_logs():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
+        cur.execute("SELECT * FROM logs")
+        rows = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+
+        cur.close()
+        conn.close()
+
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(colnames)  # headers
+        writer.writerows(rows)
+
+        output.seek(0)
+
+        return send_file(
+            io.BytesIO(output.getvalue().encode()),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='logs.csv'
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 # ✅ NEW ROUTE for React Frontend Integration
 @app.route('/submit', methods=['POST'])
 def submit_data():
