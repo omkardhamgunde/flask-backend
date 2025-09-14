@@ -11,7 +11,7 @@ CORS(app)  # ✅ Allow all frontend origins for now (you can restrict later)
 # Replace with your actual Render Postgres URL (external)
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://doweighs_8qxv_user:Pf4l3R6sTp7E7XtEnZYwir1HWVV5Ss3a@dpg-d33chvndiees739et920-a.singapore-postgres.render.com/doweighs_8qxv?sslmode=require"
+    "postgresql://doweighs_8qxv_user:Pf4l3R6sTp7E7XtEnZYwir1HWVV5Ss3a@dpg-d33chvndiees739et920-a.singapore-postgres.render.com/doweighs_8qxv"
 )
 
 def get_db_connection():
@@ -34,7 +34,7 @@ def index():
             cur = conn.cursor()
 
             cur.execute(
-                "SELECT description, unit_weight FROM inventory WHERE inventory_org = %s AND item_code = %s",
+                "SELECT description, unit_weight FROM Doweighs - ITEMS WHERE inventory_org = %s AND item_code = %s",
                 (div, item_code)
             )
             row = cur.fetchone()
@@ -106,7 +106,7 @@ def submit_data():
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT description, unit_weight FROM inventory WHERE inventory_org = %s AND item_code = %s",
+            "SELECT description, unit_weight FROM Doweighs - ITEMS WHERE inventory_org = %s AND item_code = %s",
             (div, item_code)
         )
         row = cur.fetchone()
