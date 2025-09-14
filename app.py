@@ -2,20 +2,22 @@ from flask import Flask, request, render_template, jsonify, send_file
 import psycopg2
 from datetime import datetime
 import os
-from flask_cors import CORS  # ✅ Required for React frontend
+from flask_cors import CORS
 import csv
 import io
+
 app = Flask(__name__)
-CORS(app)  # ✅ Allow all frontend origins for now (you can restrict later)
+CORS(app)
 
-# Replace with your actual Render Postgres URL (external)
-DATABASE_URL = os.environ["DATABASE_URL"]
-
+# ✅ Database URL from environment (fallback for local testing)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://doweighs_8qxv_user:Pf4l3R6sTp7E7XtEnZYwir1HWVV5Ss3a@dpg-d33chvndiees739et920-a.singapore-postgres.render.com/doweighs_8qxv"
+)
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
-# ✅ Route for form-based (template) access (optional now)
 @app.route('/', methods=['GET', 'POST'])
 def index():
     result = None
@@ -31,8 +33,11 @@ def index():
             conn = get_db_connection()
             cur = conn.cursor()
 
+            # ✅ FIX: use correct table name + column names (quoted)
             cur.execute(
-                "SELECT description, unit_weight FROM inventory WHERE inventory_org = %s AND item_code = %s",
+                '''SELECT "Description", "Unit weight" 
+                   FROM "Doweighs - ITEMS"
+                   WHERE "Inventory Org" = %s AND "Item Code" = %s''',
                 (div, item_code)
             )
             row = cur.fetchone()
@@ -59,6 +64,7 @@ def index():
             error = str(e)
 
     return render_template('index.html', result=result, error=error)
+
 @app.route('/download', methods=['GET'])
 def download_logs():
     try:
@@ -72,12 +78,10 @@ def download_logs():
         cur.close()
         conn.close()
 
-        # Create CSV in memory
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(colnames)  # headers
+        writer.writerow(colnames)
         writer.writerows(rows)
-
         output.seek(0)
 
         return send_file(
@@ -89,8 +93,7 @@ def download_logs():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-# ✅ NEW ROUTE for React Frontend Integration
+
 @app.route('/submit', methods=['POST'])
 def submit_data():
     try:
@@ -103,8 +106,11 @@ def submit_data():
         conn = get_db_connection()
         cur = conn.cursor()
 
+        # ✅ FIX: correct table + column names
         cur.execute(
-            "SELECT description, unit_weight FROM inventory WHERE inventory_org = %s AND item_code = %s",
+            '''SELECT "Description", "Unit weight"
+               FROM "Doweighs - ITEMS"
+               WHERE "Inventory Org" = %s AND "Item Code" = %s''',
             (div, item_code)
         )
         row = cur.fetchone()
@@ -114,7 +120,6 @@ def submit_data():
             net_weight = total_weight - pallet_weight
             quantity = net_weight / unit_weight
 
-            # Log to database
             cur.execute(
                 """
                 INSERT INTO logs (div, item_code, description, unit_weight, total_weight, pallet_weight, quantity, entry_date)
@@ -137,7 +142,6 @@ def submit_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ✅ Required to run on Render
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
