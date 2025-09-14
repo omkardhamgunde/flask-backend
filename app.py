@@ -11,7 +11,7 @@ CORS(app)  # ✅ Allow all frontend origins for now (you can restrict later)
 # Replace with your actual Render Postgres URL (external)
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://doweighs_8qxv_user:Pf4l3R6sTp7E7XtEnZYwir1HWVV5Ss3a@dpg-d33chvndiees739et920-a.singapore-postgres.render.com/doweighs_8qxv"
+    "postgresql://doweighs_8qxv_user:Pf4l3R6sTp7E7XtEnZYwir1HWVV5Ss3a@dpg-d33chvndiees739et920-a.singapore-postgres.render.com/doweighs_8qxv?sslmode=require"
 )
 
 def get_db_connection():
