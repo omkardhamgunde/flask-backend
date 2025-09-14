@@ -34,7 +34,7 @@ def index():
             cur = conn.cursor()
 
             cur.execute(
-                "SELECT description, unit_weight FROM 'Doweighs - ITEMS' WHERE inventory_org = %s AND item_code = %s",
+                'SELECT description, unit_weight FROM "Doweighs - ITEMS" WHERE inventory_org = %s AND item_code = %s',
                 (div, item_code)
             )
             row = cur.fetchone()
@@ -106,7 +106,7 @@ def submit_data():
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT description, unit_weight FROM 'Doweighs - ITEMS' WHERE inventory_org = %s AND item_code = %s",
+            'SELECT description, unit_weight FROM "Doweighs - ITEMS" WHERE inventory_org = %s AND item_code = %s',
             (div, item_code)
         )
         row = cur.fetchone()
