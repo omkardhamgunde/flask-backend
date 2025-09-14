@@ -33,9 +33,9 @@ def index():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            # ✅ FIX: use correct table name + column names (quoted)
+            # ✅ Correct table + column names
             cur.execute(
-                '''SELECT "Description", "Unit weight" 
+                '''SELECT "Description", "Unit weight"
                    FROM "Doweighs - ITEMS"
                    WHERE "Inventory Org" = %s AND "Item Code" = %s''',
                 (div, item_code)
@@ -44,6 +44,7 @@ def index():
 
             if row:
                 description, unit_weight = row
+                unit_weight = float(unit_weight)  # ✅ FIX: Convert to float
                 quantity = (total_weight - pallet_weight) / unit_weight
 
                 cur.execute(
@@ -106,7 +107,6 @@ def submit_data():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # ✅ FIX: correct table + column names
         cur.execute(
             '''SELECT "Description", "Unit weight"
                FROM "Doweighs - ITEMS"
@@ -117,6 +117,7 @@ def submit_data():
 
         if row:
             description, unit_weight = row
+            unit_weight = float(unit_weight)  # ✅ FIX: Convert to float
             net_weight = total_weight - pallet_weight
             quantity = net_weight / unit_weight
 
