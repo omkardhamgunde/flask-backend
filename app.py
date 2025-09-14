@@ -5,7 +5,6 @@ import os
 from flask_cors import CORS  # ✅ Required for React frontend
 import csv
 import io
-
 app = Flask(__name__)
 CORS(app)  # ✅ Allow all frontend origins for now (you can restrict later)
 
@@ -34,9 +33,8 @@ def index():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            # ✅ FIXED: Use exact column names from TablePlus, wrapped in double quotes
             cur.execute(
-                'SELECT "Description", "Unit weight" FROM "Doweighs - ITEMS" WHERE "Inventory Org" = %s AND "Item Code" = %s',
+                'SELECT description, unit_weight FROM "Doweighs - ITEMS" WHERE inventory_org = %s AND item_code = %s',
                 (div, item_code)
             )
             row = cur.fetchone()
@@ -63,8 +61,6 @@ def index():
             error = str(e)
 
     return render_template('index.html', result=result, error=error)
-
-
 @app.route('/download', methods=['GET'])
 def download_logs():
     try:
@@ -95,8 +91,7 @@ def download_logs():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
+    
 # ✅ NEW ROUTE for React Frontend Integration
 @app.route('/submit', methods=['POST'])
 def submit_data():
@@ -110,9 +105,8 @@ def submit_data():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # ✅ FIXED: Use exact column names from TablePlus
         cur.execute(
-            'SELECT "Description", "Unit weight" FROM "Doweighs - ITEMS" WHERE "Inventory Org" = %s AND "Item Code" = %s',
+            'SELECT description, unit_weight FROM "Doweighs - ITEMS" WHERE inventory_org = %s AND item_code = %s',
             (div, item_code)
         )
         row = cur.fetchone()
@@ -144,7 +138,6 @@ def submit_data():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # ✅ Required to run on Render
 if __name__ == '__main__':
